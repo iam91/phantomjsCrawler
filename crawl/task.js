@@ -14,8 +14,9 @@ page.onLoadFinished = function(status){
     if(status === 'success'){
 
         page.evaluate(function(keyWord, info){
+
             /*
-             * params should be able to be serialized via JSON
+             * params should be able to be serialized via JSON,
              * thus functions are not allowed
              */
 
@@ -44,18 +45,23 @@ page.onLoadFinished = function(status){
             if(isResult(url, info.resultIndicator)){
                 var urls = getUrls();
                 console.log(urls.length);
+                window.close();
             }else{
                 search(keyWord);
             }
         }, keyWord, info);
     }else{
         console.log('Unable to access network!');
+        phantom.exit(1);
     }
-    // phantom.exit();
 }
 
 page.onConsoleMessage = function(msg){
     console.log(msg);
+};
+
+page.onClosing = function(page){
+    phantom.exit(0);
 };
 
 page.open(info.url);
