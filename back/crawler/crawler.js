@@ -37,7 +37,6 @@ function evalPage(status){
             var chck = function(){
                 "use strict";
                 var urls = getUrls();
-
                 if(urls.length){
                     wrap(JSON.stringify(urls));
                 }
