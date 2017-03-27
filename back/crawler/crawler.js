@@ -1,6 +1,7 @@
 /**
  * Created by zwy on 17-3-16.
  */
+"use strict";
 var sys = require('system');
 var page = require('webpage').create();
 var sites = require('./sites');

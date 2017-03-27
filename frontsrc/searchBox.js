@@ -1,30 +1,27 @@
 /**
- * Created by zwy on 17-3-20.
+ * Created by zwy on 17-3-25.
  */
-
 "use strict";
+import React from 'react';
+import * as comm from './comm';
 
-class SearchBox extends React.Component{
-
+export class SearchBox extends React.Component{
     constructor(){
         super();
         this.state = { value: '' };
         this.searchHandler = this.searchHandler.bind(this);
         this.changeHandler = this.changeHandler.bind(this);
     }
-
     searchHandler(e){
-        const type = e.type;
         e.preventDefault();
-        if(type === 'keyup' && e.keyCode === 13 || type === 'click'){
+        if(e.type === 'keyup' && e.keyCode === 13 || e.type === 'click'){
             console.log('search: ' + this.state.value);
+            comm.search(this.state.value);
         }
     }
-
     changeHandler(e){
         this.setState({ value: e.target.value });
     }
-
     render(){
         return (
             <span>
@@ -33,9 +30,4 @@ class SearchBox extends React.Component{
             </span>
         );
     }
-}
-
-ReactDOM.render(
-    <SearchBox/>,
-    document.querySelector('.search-box')
-);
+};

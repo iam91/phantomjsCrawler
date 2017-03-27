@@ -18,65 +18,62 @@ const io = socketio(server);
 //constants
 const FRONT_END_DIR = path.join(__dirname, '../front');
 const CRAWLER_DIR = path.join(__dirname, './crawler/crawler.js');
-const SITES = ['bing'];
+const SITES = ['bing', 'baidu'];
 const PHANTOM_OPTION = [
     '--ssl-protocol=any',
-    '--ignore-ssl-errors=true'];
+    '--ignore-ssl-errors=true'
+];
 
 //launch server
 app.use(express.static(FRONT_END_DIR));
-server.listen(port, function(){
-    console.log('Server listening on port: ' + port);
-});
+server.listen(port, () => console.log(`Server listening on port: ${port}.`));
 
 let api = io.of('/api');
-api.on('connection', function(socket){
-    console.log('A client connected to /api');
-    socket.emit('ack', 'ack');
-    socket.on('search', function(e){
-        console.log(e);
-        socket.emit('result', 'hahahha');
+api.on('connection', (socket) => {
+    console.log('A client connected to /api.');
+
+    socket.on('disconnect', () => console.log('A client disconnected.'));
+
+    socket.on('search', (data) => {
+        const keyword = data.keyword;
+        console.log(`Search request with keyword: ${keyword}`);
+        search(keyword);
     });
 });
 
-app.get('/api', (req, res) => {
-    let keyword = 'zwy';
-    let phs = [];
+//biz
+function parse(d){
+    var cap = /<<<<<(\d*)>>>>>/.exec(d);
+    if(!cap) return null;
+    var wrapper = '<<<<<' + cap[1] + '>>>>>';
+    cap = new RegExp(wrapper + '(.*)' + wrapper).exec(d);
+    var data = JSON.parse(cap[1]);
+    return data;
+}
 
-    let resData = {};
-    let cnt = 0;
-    let send = function(){
-        if( ++ cnt == SITES.length){ res.status(200).json(resData); }
-    };
-
-    let parse = function(d){
-        var cap = /<<<<<(\d*)>>>>>/.exec(d);
-        if(!cap) return null;
-        var wrserverer = '<<<<<' + cap[1] + '>>>>>';
-        cap = new RegExp(wrserverer + '(.*)' + wrserverer).exec(d);
-        var data = JSON.parse(cap[1]);
-        return data;
-    };
-
-    SITES.forEach((site, id) => {
-        let ph = phs[id] = child_process.spawn('phantomjs', PHANTOM_OPTION.concat([CRAWLER_DIR, keyword, site]));
-        let st = site;
+function search(keyword){
+    SITES.forEach((site) => {
+        let ph = child_process.spawn('phantomjs', PHANTOM_OPTION.concat([CRAWLER_DIR, keyword, site]));
 
         ph.stdout.on('data', (data) => {
             data = parse(data.toString());
             if(data){
-                resData[st] = { data: data, status: true };
-                send();
+                api.emit('result', {
+                    status: true,
+                    result: data
+                });
             }
         });
 
         ph.stderr.on('data', (err) => {
             err = err.toString();
             console.log(err);
-            resData[st] = { data: err, status: false };
-            send();
+            api.emit('result', {
+                status: false,
+                result: err
+            });
         });
 
         ph.on('close', (code) => console.log(`child process exited with code ${code}`));
     });
-});
+}
